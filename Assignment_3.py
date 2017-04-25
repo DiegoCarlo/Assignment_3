@@ -14,11 +14,15 @@ windowY = 150
 _angle = 30
 ### view ###
 maxViewDistance = 50
+widthGround = 50
 
 player = None
 listSceneObjects = None
+listGrass = None
 listTextures = None
 listMaterials = None
+
+
 
 mouseX = 0
 mouseY = 0
@@ -26,11 +30,11 @@ mouseY = 0
 class Player(object):
 
 	def __init__(self):
-		self.movementSpeed = 0.5
+		self.movementSpeed = 0.1
 
 		self.posX = 0
-		self.posY = 1.75
-		self.posZ = -2
+		self.posY = 2.75
+		self.posZ = 11
 
 		self.centerX = 0
 		self.centerY = 0
@@ -39,7 +43,7 @@ class Player(object):
 		self.centerDistance = 1.0
 
 		self.latitude = 90	
-		self.longitude = 90
+		self.longitude = -90
 
 		self.rotation(0, 0)
 
@@ -76,7 +80,6 @@ class Player(object):
 			self.centerX = self.posX + (self.centerDistance * sin(radians(self.latitude)) * cos(radians(self.longitude)))
 			self.centerZ = self.posZ + (self.centerDistance * sin(radians(self.latitude)) * sin(radians(self.longitude)))
 
-
 	def movement(self, selfAhead, selfLateral):
 		"""
 			applica la traslazione del vettore posizione e del vettore "punto di osservazione" 
@@ -92,6 +95,8 @@ class Player(object):
 		self.posZ += translateZ
 		self.centerX += translateX
 		self.centerZ += translateZ
+
+		
 '''
 		print self.posX
 		print self.posZ
@@ -214,7 +219,7 @@ class Material(object):
 		glMaterialfv(GL_FRONT, GL_SHININESS, self.shine)
 
 class Parallelepiped(object):
-	def __init__(self, center, dimension, textureRateo, idTextures):
+	def __init__(self, center, dimension, textureRateo, idTextures, alpha = None):
 		self.center = center
 		self.dimension = dimension
 
@@ -224,6 +229,8 @@ class Parallelepiped(object):
 		self.idTextures = idTextures # up down 1_side 2_side, 3_side, 4_side
 	
 		self.listSymmetries = None
+
+		self.alpha = alpha
 
 	def getAllVertices(self, center, dimension):
 
@@ -265,8 +272,8 @@ class Parallelepiped(object):
 					if i[2] == True:
 						centerZ = -self.center[2]
 					center = [centerX, centerY, centerZ]
-					print center
-					print self.center
+					#print center
+					#print self.center
 					dimensionX = self.dimension[0]
 					dimensionY = self.dimension[1]
 					dimensionZ = self.dimension[2]
@@ -277,16 +284,22 @@ class Parallelepiped(object):
 					if i[2] == True:
 						dimensionZ = -self.dimension[2]
 					dimension = [dimensionX, dimensionY, dimensionZ]
-					print dimension
-					print self.dimension
+					#print dimension
+					#print self.dimension
 
-					vertices = self.getAllVertices(center, dimension)
+					vertices = self.getAllVertices(center, self.dimension)
 
-					self.drawFaces(center, dimension, vertices)
+					self.drawFaces(center, self.dimension, vertices)
 
 	def drawFaces(self, center, dimension, vertices):
 
+		if self.alpha != None:
+			glEnable(GL_BLEND)
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+			glEnable(GL_ALPHA_TEST)
+			glAlphaFunc(GL_GREATER, self.alpha)
 
+		glEnable(GL_TEXTURE_2D)
 		# -y +y +x -z -x +z
 		# -y
 		if self.idTextures[0] != None:
@@ -306,8 +319,6 @@ class Parallelepiped(object):
 
 		# +y
 		if self.idTextures[1] != None:
-			material = getMaterial(self.idTextures[1])
-			material.draw()
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 			glBindTexture(GL_TEXTURE_2D, getTexture(self.idTextures[1]))
 			glBegin(GL_QUADS)
@@ -323,8 +334,6 @@ class Parallelepiped(object):
 			glEnd()
 		# +x
 		if self.idTextures[2] != None:
-			material = getMaterial(self.idTextures[1])
-			material.draw()
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 			glBindTexture(GL_TEXTURE_2D, getTexture(self.idTextures[2]))
 			glBegin(GL_QUADS)
@@ -370,8 +379,6 @@ class Parallelepiped(object):
 			glEnd()
 		# +z
 		if self.idTextures[5] != None:
-			material = getMaterial(self.idTextures[1])
-			material.draw()
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 			glBindTexture(GL_TEXTURE_2D, getTexture(self.idTextures[5]))
 			glBegin(GL_QUADS)
@@ -387,6 +394,56 @@ class Parallelepiped(object):
 			glEnd()
 
 		glDisable(GL_TEXTURE_2D)
+		if self.alpha != None:
+			glDisable(GL_ALPHA_TEST)
+			glDisable(GL_BLEND)
+
+def drawCrossPanel(center, dimension, texture):
+
+	v0 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] + dimension[2]/2.0]
+	v1 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
+	v2 = [center[0] - dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
+	v3 = [center[0] - dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] + dimension[2]/2.0]
+	v4 = [center[0] + dimension[0]/2.0, center[1] - dimension[1]/2.0, center[2] + dimension[2]/2.0]
+	v5 = [center[0] + dimension[0]/2.0, center[1] - dimension[1]/2.0, center[2] - dimension[2]/2.0]
+	v6 = [center[0] - dimension[0]/2.0, center[1] - dimension[1]/2.0, center[2] - dimension[2]/2.0]
+	v7 = [center[0] - dimension[0]/2.0, center[1] - dimension[1]/2.0, center[2] + dimension[2]/2.0]
+
+	glEnable(GL_BLEND)
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+	glEnable(GL_ALPHA_TEST)
+	glAlphaFunc(GL_GREATER, 0.3)
+
+	glEnable(GL_TEXTURE_2D)
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+	glBindTexture(GL_TEXTURE_2D, texture)
+	glBegin(GL_QUADS)
+	glNormal3f(1,0,-1)
+	glTexCoord2f(0.0, 0.0)
+	glVertex3f(v6[0], v6[1], v6[2])
+	glTexCoord2f(0.0, 0.9)
+	glVertex3f(v2[0], v2[1], v2[2])
+	glTexCoord2f(1, 0.9)
+	glVertex3f(v0[0], v0[1], v0[2])
+	glTexCoord2f(1, 0)
+	glVertex3f(v4[0], v4[1], v4[2])
+	glEnd()
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+	glBindTexture(GL_TEXTURE_2D, texture)
+	glBegin(GL_QUADS)
+	glNormal3f(1,0,1)
+	glTexCoord2f(0.0, 0.0)
+	glVertex3f(v7[0], v7[1], v7[2])
+	glTexCoord2f(0.0, 0.9)
+	glVertex3f(v3[0], v3[1], v3[2])
+	glTexCoord2f(1, 0.9)
+	glVertex3f(v1[0], v1[1], v1[2])
+	glTexCoord2f(1, 0)
+	glVertex3f(v5[0], v5[1], v5[2])
+	glEnd()
+	glDisable(GL_TEXTURE_2D)
+	glDisable(GL_BLEND)	
 
 def initTexture(pathImage):
 	""" load texture """
@@ -412,7 +469,7 @@ def initTexture(pathImage):
 	# build a two-dimensional mipmap
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA, ix, iy, GL_RGBA, GL_UNSIGNED_BYTE, image_bytes)
 
-	print pathImage
+	#print pathImage
 	return texture
 
 def loadListTextures():
@@ -420,11 +477,22 @@ def loadListTextures():
 	print "loadTextures"
 	listTextures = []
 	listTextures.append(["grass", initTexture("grass.jpg")])
-	listTextures.append(["wall", initTexture("wallTest.jpg")])
-	listTextures.append(["wall2", initTexture("whiteWall.jpg")])
+	listTextures.append(["wall2", initTexture("wallTest.jpg")])
+	listTextures.append(["wall", initTexture("whiteWall.jpg")])
 	listTextures.append(["frontDoor", initTexture("frontDoor.jpg")])
 	listTextures.append(["windowDoor", initTexture("windowDoor.jpg")])
 	listTextures.append(["test", initTexture("test.png")])
+	listTextures.append(["grassLeaf", initTexture("grassLeaf.png")])
+	listTextures.append(["parquet", initTexture("parquet.jpg")])
+	listTextures.append(["window1", initTexture("window1.png")])
+	listTextures.append(["window2", initTexture("window2.png")])
+	listTextures.append(["window3", initTexture("window3.png")])
+	listTextures.append(["window4", initTexture("window4.png")])
+	listTextures.append(["mbl1", initTexture("mbl1.png")])
+	listTextures.append(["mbl2", initTexture("mbl2.png")])
+	listTextures.append(["mbl3", initTexture("mbl3.png")])
+	listTextures.append(["mblBorder", initTexture("mblBorder.png")])
+	listTextures.append(["tv", initTexture("tv.png")])
 
 def getTexture(name):
 	global listTextures
@@ -432,42 +500,18 @@ def getTexture(name):
 		if i[0] == name:
 			return i[1]
 
-def loadListMaterials():
-	global listMaterials
-	print "loadMaterials"
-	ambient = [0.05,0.05,0.05,1]
-	diffuse = [0.5,0.5,0.5,1]
-	specular = [0.7,0.7,0.04,1]
-	shininess = 10
-	listMaterials = []
-	temp = Material(ambient, diffuse, specular, shininess)
-	listTextures.append(["grass", temp])
-	listTextures.append(["wall", temp])
-	listTextures.append(["wall2", temp])
-	listTextures.append(["frontDoor", temp])
-	listTextures.append(["windowDoor", temp])
-	listTextures.append(["test", temp])
-
-def getMaterial(name):
-	global listMaterials
-	for i in listMaterials:
-		print "cerca mat"
-		if i[0] == name:
-			print "trovato"
-			return i[1]
-
-
 def initScene():
-	global player, listSceneObjects, listTextures
+	global player, listSceneObjects, listTextures, listGrass
 
+	glEnable(GL_COLOR_MATERIAL)
 	glEnable(GL_LIGHTING)
 	glEnable(GL_LIGHT0)
-	glEnable(GL_LIGHT1)
+	#glEnable(GL_LIGHT1)
 	glEnable(GL_DEPTH_TEST)
+
 	player = Player()
 
 	loadListTextures()
-	loadListMaterials()
 
 	listSceneObjects = []
 	houseHeight = 3
@@ -478,9 +522,9 @@ def initScene():
 	#listSceneObjects.append(Parallelepiped([1,1,1],[1,1,1],[1,1,1],["wall", "wall", "wall", "wall", "wall", "wall"]))
 	#listSceneObjects.append(Parallelepiped([-1,1,-1],[1,1,1],[1,1,1],["wall", "wall", "wall", "wall", "wall", "wall"]))
 	# -y +y +x -z -x +z
-	'''
-	listSceneObjects.append(Parallelepiped([.0,pavimentoH,10.0], [16.0,1,8.0], [16.0,1,8.0], [None, "wall", None, "wall", None, "wall"]))
-	temp = Parallelepiped([12.0,pavimentoH,0], [8.0,1,28.0], [8.0,1,28.0], [None, "wall", "wall", "wall", "wall", "wall"])
+	
+	listSceneObjects.append(Parallelepiped([.0,pavimentoH,10.0], [16.0,1,8.0], [16.0,1,8.0], [None, "parquet", None, "wall", None, "wall"]))
+	temp = Parallelepiped([12.0,pavimentoH,0], [8.0,1,28.0], [8.0,1,28.0], [None, "parquet", "wall", "wall", "wall", "wall"])
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
@@ -489,11 +533,103 @@ def initScene():
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([15.5,3,9], [1,4,10.0], [1,4,10.0], [None, "wall", "wall", "wall", "wall", "wall"])
+	temp = Parallelepiped([15.5,3,9], [1,4,10.0], [1,4,10.0], [None, None, "wall", "wall", "wall", "wall"])
 	temp.addSymmetry([True, False, False])
 	temp.addSymmetry([True, False, True])
 	temp.addSymmetry([False, False, True])
-	listSceneObjects.append(temp)'''
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,3,6.5], [16,4,1], [16,4,1], [None, None, "wall", "wall", "wall", "wall"])
+	listSceneObjects.append(temp)
+
+	alpha = 0.5
+	
+	temp = Parallelepiped([0,3,12.5], [6,4,0.1], [1,1,0.01], [None, None, "window1", "window1", "window1", "window1"], alpha)
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([5,3,12.5], [4,4,0.1], [1,1,0.01], [None, None, "window3", "window3", "window3", "window3"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([9,3,12.5], [4,4,0.1], [1,1,0.01], [None, None, "window1", "window1", "window1", "window1"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([13,3,12.5], [4,4,0.1], [1,1,0.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([15,3,0], [0.1,4,8], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+
+	temp = Parallelepiped([8.5,3,7], [1,4,0.1], [1,1,.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([9,3,5], [0.1,4,4], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+	
+	temp = Parallelepiped([9,3,1], [0.1,4,4], [0.01,1,1], [None, None, "window1", "window1", "window1", "window1"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([9,3,-3], [0.1,4,4], [0.01,1,1], [None, None, "window3", "window3", "window3", "window3"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([9,3,-7], [0.1,4,4], [0.01,1,1], [None, None, "window1", "window1", "window1", "window1"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([9,3,-11], [0.1,4,4], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([12,3,-13], [6,4,0.1], [1,1,0.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+	
+
+	temp = Parallelepiped([0,3,7.5], [8,4,1], [1,1,1], [None, "mblBorder", "mblBorder", None, "mblBorder", "mbl3"], alpha)
+	listSceneObjects.append(temp)
+	gap = 2.2
+	temp = Parallelepiped([0,1.05+gap,7.5], [4.8,-gap,-1], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", None, "mblBorder", None])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,3.25,7.5], [4.5,2,0.05], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "tv"])
+	listSceneObjects.append(temp)
+
+
+	temp = Parallelepiped([6,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([11,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([8.5,1.30,11.25], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([8.5,1.30,8.75], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([8.5,2,10], [7,0.1,2], [7,0.1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+
+	temp = Parallelepiped([0,1.5,11], [5,1,0.5], [5,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,1.25,11], [6,0.5,1.5], [5,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+
 	'''listSceneObjects.append(Parallelepiped([2.0,10/2 + upFromGrass,-5.0], [1.0,10,1.0], [1.0,10,1.0], ["wall", "wall", "wall", "wall", "wall", "wall"]))
 	listSceneObjects.append(Parallelepiped([8.0,7/2 + upFromGrass,-1.0], [4.0,7,10.0], [4.0,7,10.0], ["wall", "wall", "wall", "wall", "wall", "wall"]))
 	listSceneObjects.append(Parallelepiped([-8.0,7/2 + upFromGrass,-1.0], [4.0,7,10.0], [4.0,7,10.0], ["wall", "wall", "wall", "wall", "wall", "wall"]))
@@ -506,8 +642,36 @@ def initScene():
 
 	#house ended
 
-	#listSceneObjects.append(Parallelepiped([0.0,.0,.0], [1,1,1], [1,1,1], [None, "test", "test", None, None, "test"]))
+	listSceneObjects.append(Parallelepiped([0.0,.0,.0], [1,1,1], [1,1,1], [None, "test", "test", None, None, "test"]))
 
+	max = 1000
+	radius = 3
+	listGrass = []
+	temp = getGrassRand()
+	for i in range(0, max):
+		
+		if i%10 == 0:
+			temp = getGrassRand()
+		listGrass.append([temp[0]+random()*radius-radius/2, temp[1]+random()*radius-radius/2])
+
+def getGrassRand():
+
+	border = 3
+	tempX = random()*(widthGround*2-border*2)-(widthGround-border)
+	tempY = random()*(widthGround*2-border*2)-(widthGround-border)
+	temp = [tempX, tempY]
+	gap = 19
+	if temp[0] >= -gap and temp[0] <= gap and temp[1] >= -gap and temp[1] <= gap:
+		return getGrassRand()
+	return temp
+
+def drawGrass():
+	global listGrass
+	texture = getTexture("grassLeaf")
+	#drawCrossPanel([0,1.5,0],[1,1,1],texture)
+	radius = 2.
+	for i in listGrass:
+		drawCrossPanel([i[0],radius/2.,i[1]],[radius,radius,radius], texture)
 
 def drawScene():
 
@@ -522,6 +686,7 @@ def drawScene():
 	
 
 	createGround()
+	drawGrass()
 	drawGrid()
 	#test()
 	for i in listSceneObjects:
@@ -531,35 +696,40 @@ def drawScene():
 
 
 def createGround():
-	global listTextures
+	global listTextures, widthGround, listGrass
 
 	glEnable(GL_TEXTURE_2D)
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
 	glBindTexture(GL_TEXTURE_2D, getTexture("grass"))
 	glBegin(GL_QUADS)
-	width = 50
+	
 	textCoeff = 25
 	glNormal3f(0,1,0)
 	glTexCoord2f(0.0, 0.0)
-	glVertex3f(width, 0, width)
+	glVertex3f(widthGround, 0, widthGround)
 	glTexCoord2f(0.0, textCoeff)
-	glVertex3f(width, 0, -width)
+	glVertex3f(widthGround, 0, -widthGround)
 	glTexCoord2f(textCoeff, textCoeff)
-	glVertex3f(-width, 0, -width)
+	glVertex3f(-widthGround, 0, -widthGround)
 	glTexCoord2f(textCoeff, 0.0)
-	glVertex3f(-width, 0, width)
+	glVertex3f(-widthGround, 0, widthGround)
 	glEnd()
 	glDisable(GL_TEXTURE_2D)
+	
 
 def light():
 	glLightfv(GL_LIGHT0, GL_AMBIENT, [0.2,0.2,0.2,1])
-	pos = [0, 2, 0, 1]
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, [0.8,0.8,0.8,1])
+	glLightfv(GL_LIGHT0, GL_SPECULAR, [.0,.0,.0,1])
+	pos = [3, 1, 2, 0]
 	glLightfv(GL_LIGHT0, GL_POSITION, pos)
 	lightLine(pos)
-	pos = [2, 2, 0, 1]
-	glLightfv(GL_LIGHT1, GL_AMBIENT, [0.2,0.2,0.2,0])
+	'''pos = [2, 2, 0, 1]
+	glLightfv(GL_LIGHT1, GL_AMBIENT, [0.2,0,0.2,0])
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, [0.1,0.0,0.8,1])
+	glLightfv(GL_LIGHT1, GL_SPECULAR, [.0,.0,.0,1])
 	glLightfv(GL_LIGHT1, GL_POSITION, pos)
-	lightLine(pos)
+	lightLine(pos)'''
 
 def test():
 
