@@ -21,7 +21,9 @@ listSceneObjects = None
 listGrass = None
 listTextures = None
 listMaterials = None
+listThree = None
 
+skybox = None
 
 
 mouseX = 0
@@ -421,9 +423,9 @@ def drawCrossPanel(center, dimension, texture):
 	glNormal3f(1,0,-1)
 	glTexCoord2f(0.0, 0.0)
 	glVertex3f(v6[0], v6[1], v6[2])
-	glTexCoord2f(0.0, 0.9)
+	glTexCoord2f(0.0, 1)
 	glVertex3f(v2[0], v2[1], v2[2])
-	glTexCoord2f(1, 0.9)
+	glTexCoord2f(1, 1)
 	glVertex3f(v0[0], v0[1], v0[2])
 	glTexCoord2f(1, 0)
 	glVertex3f(v4[0], v4[1], v4[2])
@@ -435,9 +437,9 @@ def drawCrossPanel(center, dimension, texture):
 	glNormal3f(1,0,1)
 	glTexCoord2f(0.0, 0.0)
 	glVertex3f(v7[0], v7[1], v7[2])
-	glTexCoord2f(0.0, 0.9)
+	glTexCoord2f(0.0, 1)
 	glVertex3f(v3[0], v3[1], v3[2])
-	glTexCoord2f(1, 0.9)
+	glTexCoord2f(1, 1)
 	glVertex3f(v1[0], v1[1], v1[2])
 	glTexCoord2f(1, 0)
 	glVertex3f(v5[0], v5[1], v5[2])
@@ -491,8 +493,20 @@ def loadListTextures():
 	listTextures.append(["mbl1", initTexture("mbl1.png")])
 	listTextures.append(["mbl2", initTexture("mbl2.png")])
 	listTextures.append(["mbl3", initTexture("mbl3.png")])
+	listTextures.append(["mbl4", initTexture("mbl4.png")])
 	listTextures.append(["mblBorder", initTexture("mblBorder.png")])
 	listTextures.append(["tv", initTexture("tv.png")])
+	listTextures.append(["three1", initTexture("three3.png")])
+	listTextures.append(["three2", initTexture("three2.png")])
+	listTextures.append(["three3", initTexture("three3.png")])
+	listTextures.append(["poolBorder", initTexture("poolBorder.jpg")])
+	listTextures.append(["poolBorder2", initTexture("poolBorder2.jpg")])
+	listTextures.append(["pool", initTexture("pool.jpg")])
+	listTextures.append(["sky1", initTexture("sky1.png")])
+	listTextures.append(["sky2", initTexture("sky2.png")])
+	listTextures.append(["sky3", initTexture("sky3.png")])
+	listTextures.append(["sky4", initTexture("sky4.png")])
+	listTextures.append(["skyTop", initTexture("skyTop.png")])
 
 def getTexture(name):
 	global listTextures
@@ -501,7 +515,7 @@ def getTexture(name):
 			return i[1]
 
 def initScene():
-	global player, listSceneObjects, listTextures, listGrass
+	global player, listSceneObjects, listTextures, listGrass, listThree, skybox
 
 	glEnable(GL_COLOR_MATERIAL)
 	glEnable(GL_LIGHTING)
@@ -544,83 +558,77 @@ def initScene():
 
 	alpha = 0.5
 	
-	temp = Parallelepiped([0,3,12.5], [6,4,0.1], [1,1,0.01], [None, None, "window1", "window1", "window1", "window1"], alpha)
+	temp = Parallelepiped([0,3,12.5], [6,4,0.01], [1,1,0.01], [None, None, "window1", "window1", "window1", "window1"], alpha)
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([5,3,12.5], [4,4,0.1], [1,1,0.01], [None, None, "window3", "window3", "window3", "window3"], alpha)
+	temp = Parallelepiped([5,3,12.5], [4,4,0.01], [1,1,0.01], [None, None, "window3", "window3", "window3", "window3"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([9,3,12.5], [4,4,0.1], [1,1,0.01], [None, None, "window1", "window1", "window1", "window1"], alpha)
+	temp = Parallelepiped([9,3,12.5], [4,4,0.01], [1,1,0.01], [None, None, "window1", "window1", "window1", "window1"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([13,3,12.5], [4,4,0.1], [1,1,0.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp = Parallelepiped([13,3,12.5], [4,4,0.01], [1,1,0.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([15,3,0], [0.1,4,8], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp = Parallelepiped([15,3,0], [0.01,4,8], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
 
-	temp = Parallelepiped([8.5,3,7], [1,4,0.1], [1,1,.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp = Parallelepiped([8.5,3,7], [1,4,0.01], [1,1,.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([9,3,5], [0.1,4,4], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
-	temp.addSymmetry([True, False, False])
-	listSceneObjects.append(temp)
-	
-	temp = Parallelepiped([9,3,1], [0.1,4,4], [0.01,1,1], [None, None, "window1", "window1", "window1", "window1"], alpha)
-	temp.addSymmetry([True, False, False])
-	listSceneObjects.append(temp)
-
-	temp = Parallelepiped([9,3,-3], [0.1,4,4], [0.01,1,1], [None, None, "window3", "window3", "window3", "window3"], alpha)
-	temp.addSymmetry([True, False, False])
-	listSceneObjects.append(temp)
-
-	temp = Parallelepiped([9,3,-7], [0.1,4,4], [0.01,1,1], [None, None, "window1", "window1", "window1", "window1"], alpha)
-	temp.addSymmetry([True, False, False])
-	listSceneObjects.append(temp)
-
-	temp = Parallelepiped([9,3,-11], [0.1,4,4], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
-	temp.addSymmetry([True, False, False])
-	listSceneObjects.append(temp)
-
-	temp = Parallelepiped([12,3,-13], [6,4,0.1], [1,1,0.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
+	temp = Parallelepiped([9,3,5], [0.01,4,4], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 	
-
-	temp = Parallelepiped([0,3,7.5], [8,4,1], [1,1,1], [None, "mblBorder", "mblBorder", None, "mblBorder", "mbl3"], alpha)
-	listSceneObjects.append(temp)
-	gap = 2.2
-	temp = Parallelepiped([0,1.05+gap,7.5], [4.8,-gap,-1], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", None, "mblBorder", None])
-	listSceneObjects.append(temp)
-
-	temp = Parallelepiped([0,3.25,7.5], [4.5,2,0.05], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "tv"])
-	listSceneObjects.append(temp)
-
-
-	temp = Parallelepiped([6,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([9,3,1], [0.01,4,4], [0.01,1,1], [None, None, "window1", "window1", "window1", "window1"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([11,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([9,3,-3], [0.01,4,4], [0.01,1,1], [None, None, "window3", "window3", "window3", "window3"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([8.5,1.30,11.25], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([9,3,-7], [0.01,4,4], [0.01,1,1], [None, None, "window1", "window1", "window1", "window1"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([8.5,1.30,8.75], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([9,3,-11], [0.01,4,4], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([8.5,2,10], [7,0.1,2], [7,0.1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([12,3,-13], [6,4,0.01], [1,1,0.01], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+	
+
+	temp = Parallelepiped([0,3,7.5], [9,4,1], [1,1,1], [None, "mblBorder", "mblBorder", None, "mblBorder", "mbl4"], alpha)
+	listSceneObjects.append(temp)
+	temp = Parallelepiped([0,3,7.5], [-3.01,-2.01,-1], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", None, "mblBorder", None])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,3.0,7.75], [2.5,1.5,0.05], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "tv"])
+	listSceneObjects.append(temp)
+
+
+	temp = Parallelepiped([-6,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([-11,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([-8.5,1.30,11.25], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([-8.5,1.30,8.75], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([-8.5,2,10], [7,0.1,2], [7,0.1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
 
@@ -630,36 +638,83 @@ def initScene():
 	temp = Parallelepiped([0,1.25,11], [6,0.5,1.5], [5,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
-	'''listSceneObjects.append(Parallelepiped([2.0,10/2 + upFromGrass,-5.0], [1.0,10,1.0], [1.0,10,1.0], ["wall", "wall", "wall", "wall", "wall", "wall"]))
-	listSceneObjects.append(Parallelepiped([8.0,7/2 + upFromGrass,-1.0], [4.0,7,10.0], [4.0,7,10.0], ["wall", "wall", "wall", "wall", "wall", "wall"]))
-	listSceneObjects.append(Parallelepiped([-8.0,7/2 + upFromGrass,-1.0], [4.0,7,10.0], [4.0,7,10.0], ["wall", "wall", "wall", "wall", "wall", "wall"]))
-	listSceneObjects.append(Parallelepiped([.0,doorHeight/2 + upFromGrass,-3.0], [1.5,doorHeight,0.1], [1,1,0.1], ["frontDoor", "frontDoor", "frontDoor", "frontDoor", "frontDoor", "frontDoor"]))
-	listSceneObjects.append(Parallelepiped([4.0,doorHeight/2 + upFromGrass,-3.0], [1.5,doorHeight,0.1], [1,1,0.1], ["windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor"]))
-	listSceneObjects.append(Parallelepiped([-4.0,doorHeight/2 + upFromGrass,-3.0], [1.5,doorHeight,0.1], [1,1,0.1], ["windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor"]))
-	listSceneObjects.append(Parallelepiped([8.0,doorHeight/2 + upFromGrass,-6.0], [1.5,doorHeight,0.1], [1,1,0.1], ["windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor"]))
-	listSceneObjects.append(Parallelepiped([-8.0,doorHeight/2 + upFromGrass,-6.0], [1.5,doorHeight,0.1], [1,1,0.1], ["windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor", "windowDoor"]))
-	'''
+
+
+	temp = Parallelepiped([12,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([12,1.5,3], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([11,1.30,6.5], [0.5,0.6,8.5], [1,1,7], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([13,1.30,6.5], [0.5,0.6,8.5], [1,1,7], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([12,2,6.5], [2,0.1,9], [1,0.1,7], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+
+	temp = Parallelepiped([6.25,2.5,7.25], [2,3,0.5], [1,1,1], [None, "mblBorder", "mblBorder", None, "mblBorder", "mbl2"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([-14.75,2.5,9], [0.5,3,3], [1,1,1], [None, "mblBorder", "mbl2", "mblBorder", None, "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([-9.5,1.5,4], [1,1,4], [1,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mbl1", "mblBorder"])
+	temp.addSymmetry([False, False, True])
+	listSceneObjects.append(temp)
+
+
+	temp = Parallelepiped([.0,0.1,-6.0], [8.0,0.2,16.0], [1.0,1,1.0], [None, "pool", None, None, None, None])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([4.5,0.15,-6.0], [1.0,0.3,18.0], [1.0,1,18.0], [None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
+	temp.addSymmetry([True, False, False])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,0.15,2.5], [8.0,0.3,1.0], [8.0,1,1.0], [None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,0.15,-14.5], [8.0,0.3,1.0], [8.0,1,1.0], [None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,0.25,5], [8.0,0.5,2], [8.0,1,1.0], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
+	temp = Parallelepiped([0,0.75,5.75], [8.0,0.5,0.5], [8.0,1,1.0], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	listSceneObjects.append(temp)
 
 	#house ended
 
 	listSceneObjects.append(Parallelepiped([0.0,.0,.0], [1,1,1], [1,1,1], [None, "test", "test", None, None, "test"]))
 
+	skybox = Parallelepiped([0.0,.0,.0], [maxViewDistance*2,maxViewDistance*2,maxViewDistance*2], [1,1,1], ["skyTop", None, "sky3", "sky4", "sky1", "sky2"])
+
 	max = 1000
-	radius = 3
+	radius = 6
 	listGrass = []
+	listThree = []
 	temp = getGrassRand()
 	for i in range(0, max):
 		
 		if i%10 == 0:
 			temp = getGrassRand()
-		listGrass.append([temp[0]+random()*radius-radius/2, temp[1]+random()*radius-radius/2])
+			listThree.append(temp)
+		listGrass.append([temp[0]+random()*radius-radius/2, temp[1]+random()*radius-radius/2, random()])
 
 def getGrassRand():
 
 	border = 3
 	tempX = random()*(widthGround*2-border*2)-(widthGround-border)
 	tempY = random()*(widthGround*2-border*2)-(widthGround-border)
-	temp = [tempX, tempY]
+	temp = [tempX, tempY, random(), randint(0,2)]
 	gap = 19
 	if temp[0] >= -gap and temp[0] <= gap and temp[1] >= -gap and temp[1] <= gap:
 		return getGrassRand()
@@ -669,9 +724,27 @@ def drawGrass():
 	global listGrass
 	texture = getTexture("grassLeaf")
 	#drawCrossPanel([0,1.5,0],[1,1,1],texture)
-	radius = 2.
+	
 	for i in listGrass:
+		radius = i[2] +1
 		drawCrossPanel([i[0],radius/2.,i[1]],[radius,radius,radius], texture)
+
+def drawThrees():
+	global listThree
+	texture1 = getTexture("three1")
+	texture2 = getTexture("three2")
+	texture3 = getTexture("three3")
+	#drawCrossPanel([0,1.5,0],[1,1,1],texture)
+	for i in listThree:
+		r = i[3]
+		texture = texture1
+		if r == 1:
+			texture = texture2
+		elif r == 2:
+			texture = texture3
+
+		radius = i[2] * 4 + 8
+		drawCrossPanel([i[0],radius/2,i[1]],[radius,radius,radius], texture)
 
 def drawScene():
 
@@ -687,11 +760,14 @@ def drawScene():
 
 	createGround()
 	drawGrass()
+	drawThrees()
 	drawGrid()
+
 	#test()
 	for i in listSceneObjects:
 		i.draw()
 	light()
+
 	glutSwapBuffers()
 
 
