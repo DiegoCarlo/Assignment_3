@@ -12,38 +12,51 @@ windowHeight = 600
 windowX = 300
 windowY = 150
 _angle = 30
+
 ### view ###
 maxViewDistance = 150
 widthGround = 150
 
+# gestisce la camera
 player = None
+# contiene gli oggetti da rappresentare
 listSceneObjects = None
+# lista di coordinate dei ciuffi d'erba
 listGrass = None
-listTextures = None
-listMaterials = None
+# lista di coordinate, dimensini e tipo degli alberi
 listThree = None
+# contiene tutte le texture necessarie
+listTextures = None
 
 skybox = None
 
-
+# mouse coords
 mouseX = 0
 mouseY = 0
 
 class Player(object):
-
+	"""
+		questa contiene i vettori e i metodi necessari per muovere la telecamera.
+	"""
 	def __init__(self):
+		# modulo della velocita' di movimento
 		self.movementSpeed = 0.25
 
+		# Specifies the position of the eye point.
 		self.posX = -25
 		self.posY = 2.75
 		self.posZ = 36
 
+		# Specifies the position of the reference point.
 		self.centerX = 0
 		self.centerY = 0
 		self.centerZ = 0
 
+		# distanza fra l'eye point e il reference point
 		self.centerDistance = 1.0
 
+		# la rotazione della camera e' calcolata in base alle coordinate geografiche di una sfera ideale
+		# il centro della sfera e' eye, il raggio la distanza fra eye e il reference point
 		self.latitude = 90	
 		self.longitude = -35
 
@@ -57,30 +70,23 @@ class Player(object):
 		gluLookAt(self.posX, self.posY, self.posZ, self.centerX, self.centerY, self.centerZ, 0, 1, 0)
 
 	def rotation(self, latitudeIncr,longitudeIncr):
-		"""
-			latitude and longitude refer to angles (0:360) with the axes of the subject
-		"""
+		
 		temp = self.latitude + latitudeIncr
+		# limitazione di latitude
 		if temp > 0 and temp < 180:
 			self.latitude = temp
 
 		self.longitude += longitudeIncr
-
-		if self.latitude > 360:
-			self.latitude = self.latitude - 360
-		if self.latitude < 0:
-			self.latitude = 360 + self.latitude
-
+		# longitude e' un valore in gradi (0 - 360) viene quindi limitato a tali valori nelle righe seguenti
 		if self.longitude > 360:
 			self.longitude = self.longitude - 360
 		if self.longitude < 0:
 			self.longitude = 360 + self.longitude
 
-		self.centerY = self.posY + (self.centerDistance * cos(radians(self.latitude)))
-		
-		if self.latitude >= 0 and self.latitude < 180:
-			self.centerX = self.posX + (self.centerDistance * sin(radians(self.latitude)) * cos(radians(self.longitude)))
-			self.centerZ = self.posZ + (self.centerDistance * sin(radians(self.latitude)) * sin(radians(self.longitude)))
+		# calcolo delle coordinate del reference point 
+		self.centerY = self.posY + (self.centerDistance * cos(radians(self.latitude)))	
+		self.centerX = self.posX + (self.centerDistance * sin(radians(self.latitude)) * cos(radians(self.longitude)))
+		self.centerZ = self.posZ + (self.centerDistance * sin(radians(self.latitude)) * sin(radians(self.longitude)))
 
 	def movement(self, selfAhead, selfLateral):
 		"""
@@ -98,14 +104,20 @@ class Player(object):
 		self.centerX += translateX
 		self.centerZ += translateZ
 
-		
-'''
-		print self.posX
-		print self.posZ
-		print self.centerX
-		print self.centerZ'''
-
 class Parallelepiped(object):
+	"""
+		questa classe crea un parallelepipedo.
+		la forma viene posizionata alle coordinate del vettore center
+		le dimensioni vengono specificate dal vettore dimension
+		texture rateo indica le ripetizioni delle texture sui tre assi
+		idTextures contiene i 6 indici delle texture da rappresentare su ciascun lato, se un id e' nullo il lato relativo non verra' rappresentato
+		alpha verra' utilizzato su ogni faccia, va utilizzato solo con texture semitrasparenti
+
+		vertices contiene l'elenco dei vertici del parallelepipedo
+		listSymmetries agisce rispetto agli assi e l'origine. l'oggetto e le sue versioni simmetriche saranno considerati un oggetto unico dalle traslazioni e rotazioni
+		listRotationTranslation e' una lista di traslazioni e rotazioni applicate all'oggetto e alle sue simmetrie
+		lightEnable attiva e disattiva il vettore normale per la rifrazione della luce
+	"""
 	def __init__(self, center, dimension, textureRateo, idTextures, alpha = None):
 		self.center = center
 		self.dimension = dimension
@@ -119,11 +131,12 @@ class Parallelepiped(object):
 
 		self.listRotationTanslation = None
 
-		self.alpha = alpha
 		self.lightEnable = True
 
-	def getAllVertices(self, center, dimension):
+		self.alpha = alpha
 
+	def getAllVertices(self, center, dimension):
+		"""	dato il centro e le dimensioni del parallelepipedo calcola le coordinate dei vertici """
 		v0 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] + dimension[2]/2.0]
 		v1 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
 		v2 = [center[0] - dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
@@ -142,6 +155,7 @@ class Parallelepiped(object):
 		self.listSymmetries.append(symmetry)
 
 	def draw(self):
+		""" questa funzione disegna il parallelepipedo e le sue simmetrie"""
 
 		center = self.center
 		dimension = self.dimension
@@ -182,13 +196,13 @@ class Parallelepiped(object):
 
 					self.drawFaces(center, self.dimension, vertices)
 
-
 	def rotationTranslation(self):
-			for i in self.listRotationTanslation:
-				if len(i) == 4:
-					glRotate(i[0],i[1],i[2],i[3])
-				if len(i) == 3:
-					glTranslate(i[0],i[1],i[2])
+		""" questa funzione esegue la sequenza di rotazioni e traslazioni """
+		for i in self.listRotationTanslation:
+			if len(i) == 4:
+				glRotate(i[0],i[1],i[2],i[3])
+			if len(i) == 3:
+				glTranslate(i[0],i[1],i[2])
 
 	def addRotation(self, intensity, vector):
 		if self.listRotationTanslation == None:
@@ -201,6 +215,7 @@ class Parallelepiped(object):
 		self.listRotationTanslation.append([vector[0], vector[1], vector[2]])
 
 	def drawFaces(self, center, dimension, vertices):
+		""" esegue le traslazioni e disegna le 6 facce """
 
 		pushMatrixActivated = False
 		if self.listRotationTanslation != None:
@@ -216,38 +231,48 @@ class Parallelepiped(object):
 
 		glEnable(GL_TEXTURE_2D)
 		# -y +y +x -z -x +z
-		# -y
+
+		if self.lightEnable == False:
+			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, [1, 1, 1, .0]) #with this, the sun EMITS light
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, 70)
+		else:
+			glMaterialfv(GL_FRONT, GL_EMISSION, [.0, .0, .0, 1])
+			glMaterialfv(GL_FRONT, GL_SHININESS, 50)
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, [.5, .5, .5, 1.0])
+			glMaterialfv(GL_FRONT, GL_SPECULAR, [.1, .1, .1, 1])
+
+		# +y
 		if self.idTextures[0] != None:
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 			glBindTexture(GL_TEXTURE_2D, getTexture(self.idTextures[0]))
 			glBegin(GL_QUADS)
 			if self.lightEnable == True:
-				glNormal3f(0,-1,0)
+				glNormal3f(0,1,0)
 			glTexCoord2f(0.0, 0.0)
-			glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2])
-			glTexCoord2f(0.0, self.textureRateo[2])
-			glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2])
-			glTexCoord2f(self.textureRateo[0], self.textureRateo[2])
-			glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2])
-			glTexCoord2f(self.textureRateo[0], 0)
-			glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2])
+			glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2])
+			glTexCoord2f(0.0, self.textureRateo[0])
+			glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2])
+			glTexCoord2f(self.textureRateo[2], self.textureRateo[0])
+			glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2])
+			glTexCoord2f(self.textureRateo[2], 0.0)
+			glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2])
 			glEnd()
 
-		# +y
+		# -y
 		if self.idTextures[1] != None:
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
 			glBindTexture(GL_TEXTURE_2D, getTexture(self.idTextures[1]))
 			glBegin(GL_QUADS)
 			if self.lightEnable == True:
-				glNormal3f(0,1,0)
+				glNormal3f(0,-1,0)
 			glTexCoord2f(0.0, 0.0)
-			glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2])
-			glTexCoord2f(0.0, self.textureRateo[2])
-			glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2])
-			glTexCoord2f(self.textureRateo[0], self.textureRateo[2])
-			glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2])
-			glTexCoord2f(self.textureRateo[0], 0.0)
-			glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2])
+			glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2])
+			glTexCoord2f(0.0, self.textureRateo[0])
+			glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2])
+			glTexCoord2f(self.textureRateo[2], self.textureRateo[0])
+			glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2])
+			glTexCoord2f(self.textureRateo[2], 0)
+			glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2])
 			glEnd()
 		# +x
 		if self.idTextures[2] != None:
@@ -257,13 +282,13 @@ class Parallelepiped(object):
 			if self.lightEnable == True:
 				glNormal3f(1,0,0)
 			glTexCoord2f(0.0, 0.0)
-			glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2])
-			glTexCoord2f(0.0, self.textureRateo[1])
-			glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2])
-			glTexCoord2f(self.textureRateo[2], self.textureRateo[1])
-			glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2])
-			glTexCoord2f(self.textureRateo[2], 0.0)
 			glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2])
+			glTexCoord2f(0.0, self.textureRateo[1])
+			glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2])
+			glTexCoord2f(self.textureRateo[2], self.textureRateo[1])
+			glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2])
+			glTexCoord2f(self.textureRateo[2], 0.0)
+			glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2])
 			glEnd()
 		# -z
 		if self.idTextures[3] != None:
@@ -273,13 +298,13 @@ class Parallelepiped(object):
 			if self.lightEnable == True:
 				glNormal3f(0,0,-1)
 			glTexCoord2f(0.0, 0.0)
-			glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2])
-			glTexCoord2f(0.0, self.textureRateo[1])
-			glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2])
-			glTexCoord2f(self.textureRateo[0], self.textureRateo[1])
-			glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2])
-			glTexCoord2f(self.textureRateo[0], 0.0)
 			glVertex3f(vertices[5][0], vertices[5][1], vertices[5][2])
+			glTexCoord2f(0.0, self.textureRateo[1])
+			glVertex3f(vertices[1][0], vertices[1][1], vertices[1][2])
+			glTexCoord2f(self.textureRateo[0], self.textureRateo[1])
+			glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2])
+			glTexCoord2f(self.textureRateo[0], 0.0)
+			glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2])
 			glEnd()
 		# -x
 		if self.idTextures[4] != None:
@@ -289,13 +314,13 @@ class Parallelepiped(object):
 			if self.lightEnable == True:
 				glNormal3f(-1,0,0)
 			glTexCoord2f(0.0, 0.0)
-			glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2])
-			glTexCoord2f(0.0, self.textureRateo[1])
-			glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2])
-			glTexCoord2f(self.textureRateo[2], self.textureRateo[1])
-			glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2])
-			glTexCoord2f(self.textureRateo[2], 0.0)
 			glVertex3f(vertices[6][0], vertices[6][1], vertices[6][2])
+			glTexCoord2f(0.0, self.textureRateo[1])
+			glVertex3f(vertices[2][0], vertices[2][1], vertices[2][2])
+			glTexCoord2f(self.textureRateo[2], self.textureRateo[1])
+			glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2])
+			glTexCoord2f(self.textureRateo[2], 0.0)
+			glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2])
 			glEnd()
 		# +z
 		if self.idTextures[5] != None:
@@ -305,13 +330,13 @@ class Parallelepiped(object):
 			if self.lightEnable == True:
 				glNormal3f(.0,.0,1.0)
 			glTexCoord2f(0.0, 0.0)
-			glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2])
-			glTexCoord2f(0.0, self.textureRateo[1])
-			glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2])
-			glTexCoord2f(self.textureRateo[0], self.textureRateo[1])
-			glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2])
-			glTexCoord2f(self.textureRateo[0], 0.0)
 			glVertex3f(vertices[7][0], vertices[7][1], vertices[7][2])
+			glTexCoord2f(0.0, self.textureRateo[1])
+			glVertex3f(vertices[3][0], vertices[3][1], vertices[3][2])
+			glTexCoord2f(self.textureRateo[0], self.textureRateo[1])
+			glVertex3f(vertices[0][0], vertices[0][1], vertices[0][2])
+			glTexCoord2f(self.textureRateo[0], 0.0)
+			glVertex3f(vertices[4][0], vertices[4][1], vertices[4][2])
 			glEnd()
 
 		glDisable(GL_TEXTURE_2D)
@@ -322,42 +347,9 @@ class Parallelepiped(object):
 		if pushMatrixActivated == True:
 			glPopMatrix()
 
-class Trapezoid(Parallelepiped):
-	def __init__(self, center, dimension, width, textureRateo, idTextures, alpha = None):
-		self.center = center
-		self.dimension = dimension
-
-		self.width = width
-		self.textureRateo = textureRateo
-
-		self.vertices = self.getAllVertices(self.center, self.dimension, self.width)
-
-		self.idTextures = idTextures # up down 1_side 2_side, 3_side, 4_side
-	
-		self.listSymmetries = None
-
-		self.listRotationTanslation = None
-
-		self.alpha = alpha
-		self.lightEnable = True
-
-	def getAllVertices(self, center, dimension, width):
-		v0 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] + dimension[2]/2.0]
-		v1 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
-		v2 = [center[0] - dimension[0]/2.0, center[1] - dimension[1]/2.0, center[2] - dimension[2]/2.0]
-		v3 = [center[0] - dimension[0]/2.0, center[1] - dimension[1]/2.0, center[2] + dimension[2]/2.0]
-		v4 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0 - width, center[2] + dimension[2]/2.0]
-		v5 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0 - width, center[2] - dimension[2]/2.0]
-		v6 = [center[0] - dimension[0]/2.0 + width, center[1] - dimension[1]/2.0, center[2] - dimension[2]/2.0]
-		v7 = [center[0] - dimension[0]/2.0 + width, center[1] - dimension[1]/2.0, center[2] + dimension[2]/2.0]
-		
-		pointList = [v0, v1, v2, v3, v4, v5, v6, v7]
-		return pointList
 	
 def drawCrossPanel(center, dimension, texture):
-
-
-
+	""" questa funzione disegna oggetti come erba ed alberi """
 	v0 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] + dimension[2]/2.0]
 	v1 = [center[0] + dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
 	v2 = [center[0] - dimension[0]/2.0, center[1] + dimension[1]/2.0, center[2] - dimension[2]/2.0]
@@ -439,11 +431,7 @@ def loadListTextures():
 	print "loadTextures"
 	listTextures = []
 	listTextures.append(["grass", initTexture("grass.jpg")])
-	listTextures.append(["wall2", initTexture("wallTest.jpg")])
 	listTextures.append(["wall", initTexture("whiteWall.jpg")])
-	listTextures.append(["frontDoor", initTexture("frontDoor.jpg")])
-	listTextures.append(["windowDoor", initTexture("windowDoor.jpg")])
-	listTextures.append(["test", initTexture("test.png")])
 	listTextures.append(["grassLeaf", initTexture("grassLeaf.png")])
 	listTextures.append(["parquet", initTexture("parquet.jpg")])
 	listTextures.append(["window1", initTexture("window1.png")])
@@ -456,11 +444,12 @@ def loadListTextures():
 	listTextures.append(["mbl4", initTexture("mbl4.png")])
 	listTextures.append(["mblBorder", initTexture("mblBorder.png")])
 	listTextures.append(["tv", initTexture("tv.png")])
+	listTextures.append(["picture1", initTexture("picture1.jpg")])
+	listTextures.append(["picture2", initTexture("picture2.jpg")])
 	listTextures.append(["three1", initTexture("three1.png")])
 	listTextures.append(["three2", initTexture("three2.png")])
 	listTextures.append(["three3", initTexture("three3.png")])
-	listTextures.append(["poolBorder", initTexture("poolBorder.jpg")])
-	listTextures.append(["poolBorder2", initTexture("poolBorder2.jpg")])
+	listTextures.append(["poolBorder2", initTexture("poolBorder.jpg")])
 	listTextures.append(["pool", initTexture("pool.jpg")])
 	listTextures.append(["sky1", initTexture("sky1.png")])
 	listTextures.append(["sky2", initTexture("sky2.png")])
@@ -474,6 +463,14 @@ def getTexture(name):
 	for i in listTextures:
 		if i[0] == name:
 			return i[1]
+
+def lightLine(point): 
+	glLineWidth(2.5)  
+	glColor3f(1.0, 1.0, 1.0) 
+	glBegin(GL_LINES); 
+	glVertex3f(0, 0, 0) 
+	glVertex3f(point[0], point[1], point[2]) 
+	glEnd() 
 
 def initScene():
 	global player, listSceneObjects, listTextures, listGrass, listThree, skybox
@@ -493,17 +490,14 @@ def initScene():
 	doorHeight = 2.25
 	pavimentoH = 0.5
 	soffittoH = 5.5
-	#listSceneObjects.append(Parallelepiped([1,1,1],[1,1,1],[1,1,1],["wall", "wall", "wall", "wall", "wall", "wall"]))
-	#listSceneObjects.append(Parallelepiped([-1,1,-1],[1,1,1],[1,1,1],["wall", "wall", "wall", "wall", "wall", "wall"]))
-	# -y +y +x -z -x +z
 	
-	listSceneObjects.append(Parallelepiped([.0,pavimentoH,10.0], [16.0,1,8.0], [16.0,1,8.0], [None, "parquet", None, "wall", None, "wall"]))
-	temp = Parallelepiped([12.0,pavimentoH,0], [8.0,1,28.0], [8.0,1,28.0], [None, "parquet", "wall", "wall", "wall", "wall"])
+	listSceneObjects.append(Parallelepiped([.0,pavimentoH,10.0], [16.0,1,8.0], [16.0,1,8.0], ["parquet", None, None, "wall", None, "wall"]))
+	temp = Parallelepiped([12.0,pavimentoH,0], [8.0,1,28.0], [8.0,1,28.0], ["parquet", None, "wall", "wall", "wall", "wall"])
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	listSceneObjects.append(Parallelepiped([.0,soffittoH,10.0], [16.0,1,8.0], [16.0,1,8.0], ["wall", "parquet", None, "wall", None, "wall"]))
-	temp = Parallelepiped([12.0,soffittoH,0], [8.0,1,28.0], [8.0,1,28.0], ["wall", "parquet", "wall", "wall", "wall", "wall"])
+	listSceneObjects.append(Parallelepiped([.0,soffittoH,10.0], [16.0,1,8.0], [16.0,1,8.0], ["parquet", "wall", None, "wall", None, "wall"]))
+	temp = Parallelepiped([12.0,soffittoH,0], [8.0,1,28.0], [8.0,1,28.0], ["parquet", "wall", "wall", "wall", "wall", "wall"])
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
@@ -524,11 +518,11 @@ def initScene():
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([12,10.5,10], [8,1,8], [8,1,8], ["wall", "roof", "wall", "wall", "wall", "wall"])
+	temp = Parallelepiped([12,10.5,10], [8,1,8], [8,1,8], ["roof", "wall", "wall", "wall", "wall", "wall"])
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([12,8.5,-13.5], [8,5,1], [8,1,8], ["wall", "roof", "wall", "wall", "wall", "wall"])
+	temp = Parallelepiped([12,8.5,-13.5], [8,5,1], [8,1,8], ["roof", "wall", "wall", "wall", "wall", "wall"])
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
@@ -605,12 +599,22 @@ def initScene():
 	listSceneObjects.append(temp)
 	
 
-	temp = Parallelepiped([0,3,7.5], [9,4,1], [1,1,1], [None, "mblBorder", "mblBorder", None, "mblBorder", "mbl4"], alpha)
+	temp = Parallelepiped([0,3,7.5], [9,4,1], [1,1,1], ["mblBorder", None, "mblBorder", None, "mblBorder", "mbl4"], alpha)
 	listSceneObjects.append(temp)
 	temp = Parallelepiped([0,3,7.5], [-3.01,-2.01,-1], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", None, "mblBorder", None])
 	listSceneObjects.append(temp)
 
 	temp = Parallelepiped([0,3.0,7.75], [2.5,1.5,0.05], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "tv"])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,0,0], [4.5,3.25,0.05], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "picture2"])
+	temp.addTranslation([15,3,8.75])
+	temp.addRotation(-90,[0,1,0])
+	listSceneObjects.append(temp)
+
+	temp = Parallelepiped([0,0,0], [4.5,3.25,0.05], [1,1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "picture1"])
+	temp.addTranslation([15,3,-8.75])
+	temp.addRotation(-90,[0,1,0])
 	listSceneObjects.append(temp)
 
 
@@ -620,20 +624,20 @@ def initScene():
 	temp = Parallelepiped([-11,1.5,10], [1,1,1], [1,1,1], [None, None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([-8.5,1.30,11.25], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([-8.5,1.30,11.25], [6.5,0.6,0.5], [7,1,1], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([-8.5,1.30,8.75], [6.5,0.6,0.5], [7,1,1], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([-8.5,1.30,8.75], [6.5,0.6,0.5], [7,1,1], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
 	temp = Parallelepiped([-8.5,2,10], [7,0.1,2], [7,0.1,1], ["mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
 
-	temp = Parallelepiped([0,1.5,11], [5,1,0.5], [5,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([0,1.5,11], [5,1,0.5], [5,1,1], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([0,1.25,11], [6,0.5,1.5], [5,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([0,1.25,11], [6,0.5,1.5], [5,1,1], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
 
@@ -646,11 +650,11 @@ def initScene():
 	temp.addSymmetry([False, False, True])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([11,1.30,6.5], [0.5,0.6,8.5], [1,1,7], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([11,1.30,6.5], [0.5,0.6,8.5], [1,1,7], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	temp.addSymmetry([False, False, True])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([13,1.30,6.5], [0.5,0.6,8.5], [1,1,7], [None,  "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([13,1.30,6.5], [0.5,0.6,8.5], [1,1,7], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	temp.addSymmetry([False, False, True])
 	listSceneObjects.append(temp)
 
@@ -659,34 +663,34 @@ def initScene():
 	listSceneObjects.append(temp)
 
 
-	temp = Parallelepiped([6.25,2.5,7.25], [2,3,0.5], [1,1,1], [None, "mblBorder", "mblBorder", None, "mblBorder", "mbl2"])
+	temp = Parallelepiped([6.25,2.5,7.25], [2,3,0.5], [1,1,1], ["mblBorder", None, "mblBorder", None, "mblBorder", "mbl2"])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([-14.75,2.5,9], [0.5,3,3], [1,1,1], [None, "mblBorder", "mbl2", "mblBorder", None, "mblBorder"])
+	temp = Parallelepiped([-14.75,2.5,9], [0.5,3,3], [1,1,1], ["mblBorder", None, "mbl2", "mblBorder", None, "mblBorder"])
 	temp.addSymmetry([False, False, True])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([-9.5,1.5,4], [1,1,4], [1,1,1], [None, "mblBorder", "mblBorder", "mblBorder", "mbl1", "mblBorder"])
+	temp = Parallelepiped([-9.5,1.5,4], [1,1,4], [1,1,1], ["mblBorder", None, "mblBorder", "mblBorder", "mbl1", "mblBorder"])
 	temp.addSymmetry([False, False, True])
 	listSceneObjects.append(temp)
 
 
-	temp = Parallelepiped([.0,0.1,-6.0], [8.0,0.2,16.0], [1.0,1,1.0], [None, "pool", None, None, None, None])
+	temp = Parallelepiped([.0,0.1,-6.0], [8.0,0.2,16.0], [1.0,1,1.0], ["pool", None, None, None, None, None])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([4.5,0.15,-6.0], [1.0,0.3,18.0], [1.0,1,18.0], [None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
+	temp = Parallelepiped([4.5,0.15,-6.0], [1.0,0.3,18.0], [1.0,1,18.0], ["poolBorder2", None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([0,0.15,2.5], [8.0,0.3,1.0], [8.0,1,1.0], [None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
+	temp = Parallelepiped([0,0.15,2.5], [8.0,0.3,1.0], [8.0,1,1.0], ["poolBorder2", None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([0,0.15,-14.5], [8.0,0.3,1.0], [8.0,1,1.0], [None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
+	temp = Parallelepiped([0,0.15,-14.5], [8.0,0.3,1.0], [8.0,1,1.0], ["poolBorder2", None, "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
 	listSceneObjects.append(temp)
 
-	temp = Parallelepiped([0,0.25,5], [8.0,0.5,2], [8.0,1,1.0], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([0,0.25,5], [8.0,0.5,2], [8.0,1,1.0], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
-	temp = Parallelepiped([0,0.75,5.75], [8.0,0.5,0.5], [8.0,1,1.0], [None, "mblBorder", "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
+	temp = Parallelepiped([0,0.75,5.75], [8.0,0.5,0.5], [8.0,1,1.0], ["mblBorder", None, "mblBorder", "mblBorder", "mblBorder", "mblBorder"])
 	listSceneObjects.append(temp)
 
 
@@ -718,27 +722,13 @@ def initScene():
 	temp = Parallelepiped([15,7.68,-10], [0.01,3.38,6], [0.01,1,1], [None, None, "window4", "window4", "window4", "window4"], alpha)
 	temp.addSymmetry([True, False, False])
 	listSceneObjects.append(temp)
-	'''
 
-	temp = Trapezoid([12,8.5,-4],[8,5,20], 1,[8,5,20],["poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
-	listSceneObjects.append(temp)
-	temp = Trapezoid([12,8.5,-4],[8,5,20], 1,[8,5,20],["poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
-	temp.addRotation(180,[0,1,0])
-	temp.addTranslation([0,0,8])
-	listSceneObjects.append(temp)
-
-	temp = Trapezoid([0,8.5,0],[8,5,16], 1,[8,5,16],["poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2", "poolBorder2"])
-	temp.addRotation(-90,[0,1,0])
-	temp.addTranslation([10,0,0])
-	listSceneObjects.append(temp)
-	#house ended
-	'''
-	#listSceneObjects.append(Parallelepiped([0.0,.0,.0], [1,1,1], [1,1,1], [None, "test", "test", None, None, "test"]))
-
-	skybox = Parallelepiped([0.0,.0,.0], [maxViewDistance*2,maxViewDistance*2,maxViewDistance*2], [1,1,1], ["skyTop", "skyTop", "sky1", "sky4", "sky3", "sky2"])
-
+	skybox = Parallelepiped([0.0,.0,.0], [-maxViewDistance*2,maxViewDistance*2,maxViewDistance*2], [1,1,1], ["skyTop", "skyTop", "sky2", "sky3", "sky4", "sky1"])
+	skybox.addRotation(90,[0,1,0])
 	skybox.lightEnable = False
 
+
+	# erba ed alberi
 	max = 1000
 	radius = 16
 	listGrass = []
@@ -752,7 +742,7 @@ def initScene():
 		listGrass.append([temp[0]+random()*radius-radius/2, temp[1]+random()*radius-radius/2, random()])
 
 def getGrassRand():
-
+	""" ricava una coppia di coordinate esterne alla casa """
 	border = 3
 	tempX = random()*(widthGround*2-border*2)-(widthGround-border)
 	tempY = random()*(widthGround*2-border*2)-(widthGround-border)
@@ -765,8 +755,6 @@ def getGrassRand():
 def drawGrass():
 	global listGrass
 	texture = getTexture("grassLeaf")
-	#drawCrossPanel([0,1.5,0],[1,1,1],texture)
-	
 	for i in listGrass:
 		radius = i[2] + 2
 		drawCrossPanel([i[0],radius/2.,i[1]],[radius,radius,radius], texture)
@@ -776,7 +764,7 @@ def drawThrees():
 	texture1 = getTexture("three1")
 	texture2 = getTexture("three2")
 	texture3 = getTexture("three3")
-	#drawCrossPanel([0,1.5,0],[1,1,1],texture)
+
 	for i in listThree:
 		r = i[3]
 		texture = texture1
@@ -793,19 +781,15 @@ def drawScene():
 	global _angle, player, listSceneObjects, skybox
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-	glMatrixMode(GL_MODELVIEW) #Switch to the drawing perspective
-	glLoadIdentity() #Reset the drawing perspective
+	glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity() 
 	
 	player.update()
-
-	
 
 	createGround()
 	drawGrass()
 	drawThrees()
-	drawGrid()
 
-	#test()
 	for i in listSceneObjects:
 		i.draw()
 
@@ -843,141 +827,6 @@ def light():
 	glLightfv(GL_LIGHT0, GL_SPECULAR, [.0,.0,.0,1])
 	glLightfv(GL_LIGHT0, GL_POSITION, pos)
 	#lightLine(pos)
-def test():
-
-	glTranslatef(0.0, 0.0, -5.0) #Move forward 5 units
-
-	#Ex 1: Half the size
-	glScalef(0.5,0.5,0.5)
-
-	glPushMatrix() #Save the transformations performed thus far
-	glTranslatef(0.0, -1.0, 0.0) #Move to the center of the trapezoid
-	glRotatef(_angle, 0.0, 0.0, 1.0) #Rotate about the z-axis
-	glBegin(GL_QUADS)
-
-	#Trapezoid
-	glVertex3f(-0.7, -0.5, 0.0)
-	glVertex3f(0.7, -0.5, 0.0)
-	glVertex3f(0.4, 0.5, 0.0)
-	glVertex3f(-0.4, 0.5, 0.0)
-
-	glEnd()
-
-	glPopMatrix() #Undo the move to the center of the trapezoid
-
-	glPushMatrix() #Save the current state of transformations
-
-	glTranslatef(0.5,0.0,0.0)
-	glPushMatrix()
-
-	glTranslatef(1.0, 1.0, 0.0) #Move to the center of the pentagon
-	glRotatef(2*_angle, 0.0, 1.0, 0.0) #Rotate about the y-axis
-	glScalef(0.7, 0.7, 0.7) #Scale by 0.7 in the x, y, and z directions
-
-	glBegin(GL_TRIANGLES)
-
-	#Pentagon
-	glVertex3f(-0.5, -0.5, 0.0)
-	glVertex3f(0.5, -0.5, 0.0)
-	glVertex3f(-0.5, 0.0, 0.0)
-
-	glVertex3f(-0.5, 0.0, 0.0)
-	glVertex3f(0.5, -0.5, 0.0)
-	glVertex3f(0.5, 0.0, 0.0)
-
-	glVertex3f(-0.5, 0.0, 0.0)
-	glVertex3f(0.5, 0.0, 0.0)
-	glVertex3f(0.0, 0.5, 0.0)
-
-	glEnd()
-
-	glPopMatrix() #Undo the move to the center of the pentagon
-	glPushMatrix() #Save the current state of transformations
-	glTranslatef(-1.0, 1.0, 0.0) #Move to the center of the triangle
-	glRotatef(3*_angle, 1.0, 2.0, 3.0) #Rotate about the the vector (1, 2, 3)
-
-	glBegin(GL_TRIANGLES)
-
-	#Triangle
-	glVertex3f(0.5, -0.5, 0.0)
-	glVertex3f(0.0, 0.5, 0.0)
-	glVertex3f(-0.5, -0.5, 0.0)
-
-	glEnd()
-
-	glPopMatrix()
-	glPopMatrix()
-
-
-	glColor3f(1.0, 0.0, 0.0);
-
-	glBegin(GL_POLYGON);  #start house 
-	glColor3f(1.0, 1.0, 0.0);
-	glVertex2i(50, 0);
-	glColor3f(0.0, 1.0, 0.0);
-	glVertex2i(50, 100);
-	glColor3f(0.0, 1.0, 1.0);
-	glVertex2i(150, 100);
-	glColor3f(1.0, 1.0, 0.0);
-	glVertex2i(150,0);
-	glEnd();   #end house
-
-	glBegin(GL_POLYGON);  #start window 
-	glColor3f(0.3, 0.2, 0.0);
-	glVertex2i(60, 80);
-	glVertex2i(80, 80);
-	glVertex2i(80, 65);
-	glVertex2i(60, 65);
-	glEnd();   #end window
-
-	glBegin(GL_POLYGON);  #start window
-	glColor3f(0.3, 0.2, 0.0);
-	glVertex2i(120, 80);
-	glVertex2i(140, 80);
-	glVertex2i(140, 65);
-	glVertex2i(120, 65);
-	glEnd();   #end window
-
-	glBegin(GL_POLYGON); #start ceiling
-	glColor3f(0.8, 0.0, 0.0);
-	glVertex2i(50, 100);
-	glColor3f(0.5, 0.0, 0.3);
-	glVertex2i(150, 100);
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex2i(100, 130);
-	glEnd(); #end ceiling
-
-	glBegin(GL_POLYGON);  #start door
-	glColor3f(0.3, 0.2, 0.0);
-	glVertex2i(80, 0);
-	glVertex2i(80, 50);
-	glVertex2i(120, 50);
-	glVertex2i(120,0);
-	glEnd();  #end door
-
-def drawGrid():
-
-	for i in range(0,50):
-
-		glLineWidth(.1) 
-		glBegin(GL_LINES)
-		glVertex3f(i-25, -0.1, -25)
-		glVertex3f(i-25, -0.1, 25)
-		glEnd()
-
-		glLineWidth(.1) 
-		glBegin(GL_LINES)
-		glVertex3f(-25, -0.1, i-25)
-		glVertex3f(25, -0.1, i-25)
-		glEnd()
-
-def lightLine(point):
-	glLineWidth(2.5) 
-	glColor3f(1.0, 1.0, 1.0)
-	glBegin(GL_LINES);
-	glVertex3f(0, 0, 0)
-	glVertex3f(point[0], point[1], point[2])
-	glEnd()
 
 def keyPressed1(key, x, y):
 	global player
@@ -1058,16 +907,12 @@ def main():
 	glutInitWindowPosition(windowX, windowY)
 	glutCreateWindow("Assignment_3_Dream_House.py")
 	glutReshapeFunc(resizeScene)
-	#glutFullScreen()
 	initScene()
 
 	glutDisplayFunc(drawScene)
 	glutIdleFunc(drawScene)
 	glutKeyboardFunc(keyPressed1)
 	glutSpecialFunc(keyPressed2)
-
-	#glutMouseFunc(mousePressed)
-	#glutMotionFunc(mouseMotion)
 	glutPassiveMotionFunc(mouseMotion)
 
 	glutMainLoop()
